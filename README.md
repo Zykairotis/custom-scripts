@@ -98,6 +98,75 @@ cvt-txt --input ~/enterprise-app \
 - **Migration assistance** - Extract content before system changes
 - **Search index creation** - Make file contents full-text searchable
 
+# cvt-comb - File Combiner
+
+`cvt-comb` is a shell script that scans a directory and combines files into folder-wise summary files. It is useful for creating a single text file from a directory of text files, for example, to be used as context for a large language model.
+
+## Features
+
+- Combines files from subdirectories into individual summary files.
+- Combines files from the root directory into a `root.txt` summary file.
+- Customizable file pattern to combine different types of files.
+- Customizable output directory.
+- Silent mode to suppress informational output.
+- Help message with usage instructions and examples.
+
+## Usage
+
+```bash
+./cvt-comb [OPTIONS] [INPUT_DIRECTORY]
+```
+
+### Arguments
+
+- `INPUT_DIRECTORY`: The directory to process. Defaults to the current directory.
+
+### Options
+
+- `-o, --output DIR`: Set the output directory. Defaults to `combined_output`.
+- `-p, --pattern PATT`: Set the file search pattern. Defaults to `*.txt`.
+- `-h, --help`: Display the help message and exit.
+- `-s, --silent`: Suppress all informational output.
+
+### Examples
+
+- **Process the current directory:**
+
+  ```bash
+  ./cvt-comb
+  ```
+
+- **Process a specific directory:**
+
+  ```bash
+  ./cvt-comb /path/to/your/files
+  ```
+
+- **Set a custom output directory:**
+
+  ```bash
+  ./cvt-comb -o ./my-combined-files
+  ```
+
+- **Combine all `.js` files:**
+
+  ```bash
+  ./cvt-comb -p "*.js"
+  ```
+
+## How it Works
+
+The script performs the following actions:
+
+1.  Parses command-line arguments to set the input directory, output directory, file pattern, and silent mode.
+2.  Validates that the input directory exists and is not the same as the output directory.
+3.  Creates the output directory if it doesn't exist.
+4.  For each subdirectory in the input directory, it creates a summary file (e.g., `auth.txt`).
+5.  It then finds all files matching the file pattern within that subdirectory and appends their contents to the summary file.
+6.  For all files in the root of the input directory, it creates a `root.txt` summary file and appends their contents.
+7.  Each combined file includes a header indicating the original file path.
+
+
 ## 📄 License
 
 MIT License - Feel free to modify and distribute.
