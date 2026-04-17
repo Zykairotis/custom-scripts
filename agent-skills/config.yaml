@@ -1,0 +1,987 @@
+# agent-skills/config.yaml
+# Single source of truth for all skill requirements.
+# install.sh reads this file to know what to check, install, and prompt for.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PACKAGE MANAGERS
+# Ordered by preference per OS. install.sh picks the first one found.
+# ─────────────────────────────────────────────────────────────────────────────
+pkg_managers:
+  linux:
+    preferred: [pacman, apt, brew]
+    pacman:
+      check: "pacman --version"
+      install: null  # built-in on Arch
+    apt:
+      check: "apt-get --version"
+      install: null  # built-in on Debian/Ubuntu
+    brew:
+      check: "brew --version"
+      install: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+  macos:
+    preferred: [brew]
+    brew:
+      check: "brew --version"
+      install: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+  windows:
+    preferred: [choco, winget, scoop]
+    choco:
+      check: "choco --version"
+      install: "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+    winget:
+      check: "winget --version"
+      install: null  # built-in on Windows 10+
+    scoop:
+      check: "scoop --version"
+      install: "irm get.scoop.sh | iex"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CLI TOOLS
+# check: command to verify presence (exit 0 = found)
+# required: true = block if missing, false = warn only
+# install: per-package-manager install commands
+# post_install: command to run after installing
+# ─────────────────────────────────────────────────────────────────────────────
+tools:
+  git:
+    check: "git --version"
+    skills: [yeet, brainstorming, writing-plans, finishing-a-development-branch, commit-security-scan, planning-with-files]
+    required: true
+    install:
+      pacman: "sudo pacman -S --noconfirm git"
+      apt: "sudo apt-get install -y git"
+      brew: "brew install git"
+      choco: "choco install git -y"
+      winget: "winget install Git.Git"
+
+  curl:
+    check: "curl --version"
+    skills: [context7, parallel-web-search, parallel-deep-research, parallel-web-extract, parallel-data-enrichment, setup, google-slides, mesh-setup]
+    required: true
+    install:
+      pacman: "sudo pacman -S --noconfirm curl"
+      apt: "sudo apt-get install -y curl"
+      brew: "brew install curl"
+      choco: "choco install curl -y"
+      winget: "winget install cURL.cURL"
+
+  jq:
+    check: "jq --version"
+    skills: [context7, termdock-ast, commit-security-scan, vulnerability-validation, marketplace, mesh-setup]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm jq"
+      apt: "sudo apt-get install -y jq"
+      brew: "brew install jq"
+      choco: "choco install jq -y"
+      winget: "winget install jqlang.jq"
+
+  ripgrep:
+    check: "rg --version"
+    skills: [termdock-ast, session-navigation, skill-creation]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm ripgrep"
+      apt: "sudo apt-get install -y ripgrep"
+      brew: "brew install ripgrep"
+      choco: "choco install ripgrep -y"
+      winget: "winget install BurntSushi.ripgrep.MSVC"
+
+  node:
+    check: "node --version"
+    skills: [playwright, find-skills, agent-browser-verify, frontend-design, ai-sdk, vercel-cli, workflow]
+    required: true
+    install:
+      pacman: "sudo pacman -S --noconfirm nodejs npm"
+      apt: "sudo apt-get install -y nodejs npm"
+      brew: "brew install node"
+      choco: "choco install nodejs -y"
+      winget: "winget install OpenJS.NodeJS"
+
+  bun:
+    check: "bun --version"
+    skills: [flux]
+    required: false
+    install:
+      any: "curl -fsSL https://bun.sh/install | bash"
+
+  gh:
+    check: "gh --version"
+    skills: [yeet, finishing-a-development-branch, commit-security-scan, receiving-code-review, github, review]
+    required: false
+    post_install: "gh auth login"
+    install:
+      pacman: "sudo pacman -S --noconfirm github-cli"
+      apt: "sudo apt-get install -y gh"
+      brew: "brew install gh"
+      choco: "choco install gh -y"
+      winget: "winget install GitHub.cli"
+
+  vercel:
+    check: "vercel --version"
+    skills: [vercel-cli, deployments-cicd, env-vars, bootstrap, vercel-api, vercel-firewall, vercel-flags, vercel-functions, vercel-queues, vercel-sandbox, vercel-services, vercel-storage, observability, routing-middleware, runtime-cache, marketplace, cron-jobs, geistdocs, investigation-mode]
+    required: false
+    post_install: "vercel login"
+    install:
+      npm: "npm install -g vercel"
+
+  agent-browser:
+    check: "agent-browser --version"
+    skills: [agent-browser, browser-navigation, mesh-setup, agent-browser-verify]
+    required: false
+    post_install: "agent-browser install"
+    install:
+      npm: "npm install -g agent-browser"
+      brew: "brew install agent-browser"
+      cargo: "cargo install agent-browser"
+
+  parallel-cli:
+    check: "parallel-cli --version"
+    skills: [parallel-web-search, parallel-web-extract, parallel-deep-research, parallel-data-enrichment, result, status, setup]
+    required: false
+    post_install: "parallel-cli login"
+    install:
+      any: "curl -fsSL https://parallel.ai/install.sh | bash"
+      pipx: 'pipx install "parallel-web-tools[cli]"'
+
+  aws:
+    check: "aws --version"
+    skills: [aws]
+    required: false
+    post_install: "aws configure"
+    install:
+      # linux x86_64 — for arm64 replace x86_64 with aarch64
+      any: "ARCH=$(uname -m | sed 's/x86_64/x86_64/;s/aarch64/aarch64/;s/arm64/aarch64/') && curl \"https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip\" -o /tmp/awscliv2.zip && unzip -q /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install"
+      brew: "brew install awscli"
+      choco: "choco install awscli -y"
+      winget: "winget install Amazon.AWSCLI"
+
+  az:
+    check: "az --version"
+    skills: [azure]
+    required: false
+    post_install: "az login"
+    install:
+      any: "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
+      brew: "brew install azure-cli"
+      choco: "choco install azure-cli -y"
+      winget: "winget install Microsoft.AzureCLI"
+
+  gcloud:
+    check: "gcloud --version"
+    skills: [gcp]
+    required: false
+    post_install: "gcloud auth login && gcloud auth application-default login"
+    install:
+      any: "curl https://sdk.cloud.google.com | bash"
+      brew: "brew install --cask google-cloud-sdk"
+      choco: "choco install gcloudsdk -y"
+      winget: "winget install Google.CloudSDK"
+
+  terraform:
+    check: "terraform --version"
+    skills: [terraform]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm terraform"
+      apt: "sudo apt-get install -y terraform"
+      brew: "brew install terraform"
+      choco: "choco install terraform -y"
+      winget: "winget install Hashicorp.Terraform"
+
+  kubectl:
+    check: "kubectl version --client"
+    skills: [kubernetes, helm]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm kubectl"
+      apt: "sudo apt-get install -y kubectl"
+      brew: "brew install kubectl"
+      choco: "choco install kubernetes-cli -y"
+      winget: "winget install Kubernetes.kubectl"
+
+  helm:
+    check: "helm version"
+    skills: [helm, kubernetes]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm helm"
+      apt: "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+      brew: "brew install helm"
+      choco: "choco install kubernetes-helm -y"
+      winget: "winget install Helm.Helm"
+
+  docker:
+    check: "docker --version"
+    skills: [docker]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm docker && sudo systemctl enable --now docker && sudo usermod -aG docker $USER"
+      apt: "sudo apt-get install -y docker.io && sudo systemctl enable --now docker && sudo usermod -aG docker $USER"
+      brew: "brew install --cask docker"
+      choco: "choco install docker-desktop -y"
+      winget: "winget install Docker.DockerDesktop"
+
+  ansible:
+    check: "ansible --version"
+    skills: [ansible]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm ansible"
+      apt: "sudo apt-get install -y ansible"
+      brew: "brew install ansible"
+      pip: "pip install ansible"
+      choco: "choco install ansible -y"
+
+  scrot:
+    check: "scrot --version"
+    skills: [screenshot]
+    required: false
+    os: [linux]
+    install:
+      pacman: "sudo pacman -S --noconfirm scrot"
+      apt: "sudo apt-get install -y scrot"
+
+  imagemagick:
+    check: "convert --version"
+    skills: [screenshot]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm imagemagick"
+      apt: "sudo apt-get install -y imagemagick"
+      brew: "brew install imagemagick"
+      choco: "choco install imagemagick -y"
+      winget: "winget install ImageMagick.ImageMagick"
+
+  tesseract:
+    check: "tesseract --version"
+    skills: [pdf-reader]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm tesseract tesseract-data-eng"
+      apt: "sudo apt-get install -y tesseract-ocr"
+      brew: "brew install tesseract"
+      choco: "choco install tesseract -y"
+      winget: "winget install UB-Mannheim.TesseractOCR"
+
+  libreoffice:
+    check: "soffice --version"
+    skills: [doc]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm libreoffice-still"
+      apt: "sudo apt-get install -y libreoffice"
+      brew: "brew install --cask libreoffice"
+      choco: "choco install libreoffice -y"
+      winget: "winget install TheDocumentFoundation.LibreOffice"
+
+  poppler:
+    check: "pdftoppm -v"
+    skills: [doc, pdf-reader]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm poppler"
+      apt: "sudo apt-get install -y poppler-utils"
+      brew: "brew install poppler"
+      choco: "choco install poppler -y"
+
+  rustup:
+    check: "rustup --version"
+    skills: [wasm-expert, rust-expert]
+    required: false
+    install:
+      any: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+      brew: "brew install rustup"
+      choco: "choco install rustup -y"
+      winget: "winget install Rustlang.Rustup"
+
+  wasm-pack:
+    check: "wasm-pack --version"
+    skills: [wasm-expert]
+    required: false
+    install:
+      any: "curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh"
+      cargo: "cargo install wasm-pack"
+
+  sentry-cli:
+    check: "sentry-cli --version"
+    skills: [sentry]
+    required: false
+    install:
+      npm: "npm install -g @sentry/cli"
+      brew: "brew install getsentry/tools/sentry-cli"
+      any: "curl -sL https://sentry.io/get-cli/ | bash"
+
+  turbo:
+    check: "turbo --version"
+    skills: [turborepo]
+    required: false
+    post_install: "turbo login && turbo link"
+    install:
+      npm: "npm install -g turbo"
+
+  python3:
+    check: "python3 --version"
+    skills: [backtesting-trading-strategies, doc, planning-with-files, pdf-reader, mesh-setup]
+    required: true
+    install:
+      pacman: "sudo pacman -S --noconfirm python"
+      apt: "sudo apt-get install -y python3 python3-pip"
+      brew: "brew install python"
+      choco: "choco install python -y"
+      winget: "winget install Python.Python.3"
+
+  uv:
+    check: "uv --version"
+    skills: [doc, backtesting-trading-strategies]
+    required: false
+    install:
+      any: "curl -LsSf https://astral.sh/uv/install.sh | sh"
+      brew: "brew install uv"
+      choco: "choco install uv -y"
+      winget: "winget install astral-sh.uv"
+
+  pipx:
+    check: "pipx --version"
+    skills: [parallel-cli]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm python-pipx"
+      apt: "sudo apt-get install -y pipx"
+      brew: "brew install pipx"
+      pip: "pip install pipx"
+
+  graphviz:
+    check: "dot -V"
+    skills: [writing-skills]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm graphviz"
+      apt: "sudo apt-get install -y graphviz"
+      brew: "brew install graphviz"
+      choco: "choco install graphviz -y"
+      winget: "winget install Graphviz.Graphviz"
+
+  dotnet:
+    check: "dotnet --version"
+    skills: [csharp-async, csharp-docs, csharp-mstest, csharp-nunit, csharp-tunit, csharp-xunit]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm dotnet-sdk"
+      apt: "sudo apt-get install -y dotnet-sdk-8.0"
+      brew: "brew install dotnet"
+      choco: "choco install dotnet-sdk -y"
+      winget: "winget install Microsoft.DotNet.SDK.8"
+
+  go:
+    check: "go version"
+    skills: [golang-expert]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm go"
+      apt: "sudo apt-get install -y golang-go"
+      brew: "brew install go"
+      choco: "choco install golang -y"
+      winget: "winget install GoLang.Go"
+
+  ffmpeg:
+    check: "ffmpeg -version"
+    skills: [screenshot]
+    required: false
+    install:
+      pacman: "sudo pacman -S --noconfirm ffmpeg"
+      apt: "sudo apt-get install -y ffmpeg"
+      brew: "brew install ffmpeg"
+      choco: "choco install ffmpeg -y"
+      winget: "winget install Gyan.FFmpeg"
+
+  pnpm:
+    check: "pnpm --version"
+    skills: [next-forge, turborepo, nextjs]
+    required: false
+    install:
+      npm: "npm install -g pnpm"
+      any: "curl -fsSL https://get.pnpm.io/install.sh | sh -"
+      brew: "brew install pnpm"
+      choco: "choco install pnpm -y"
+      winget: "winget install pnpm.pnpm"
+
+  nmap:
+    check: "nmap --version"
+    skills: [linux-networking, security-audit]
+    required: false
+    os: [linux, macos]
+    install:
+      pacman: "sudo pacman -S --noconfirm nmap"
+      apt: "sudo apt-get install -y nmap"
+      brew: "brew install nmap"
+      choco: "choco install nmap -y"
+      winget: "winget install Insecure.Nmap"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTHON PACKAGES
+# ─────────────────────────────────────────────────────────────────────────────
+python_packages:
+  backtesting:
+    skills: [backtesting-trading-strategies]
+    required: true
+    packages: [pandas, numpy, yfinance, matplotlib]
+    optional: [ta-lib, scipy, scikit-learn]
+    install: "uv pip install pandas numpy yfinance matplotlib"
+
+  doc:
+    skills: [doc]
+    required: true
+    packages: [docx, pdf2image]
+    install: "uv pip install python-docx pdf2image"
+
+  llm_finetuning:
+    skills: [llm-finetuning]
+    required: true
+    packages: [torch, transformers, peft, datasets, bitsandbytes, accelerate]
+    optional: [mlflow, wandb]
+    install: "uv pip install torch transformers peft datasets bitsandbytes accelerate"
+
+  ml_engineer:
+    skills: [ml-engineer]
+    required: false
+    packages: [torch, sklearn, mlflow]
+    optional: [wandb, optuna]
+    install: "uv pip install torch scikit-learn mlflow"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENVIRONMENT VARIABLES
+# required: true  = prompt always
+# secret: true    = hidden input
+# auto_generate   = shell command to generate value automatically
+# note            = shown to user during prompt
+# ─────────────────────────────────────────────────────────────────────────────
+env_vars:
+  ANTHROPIC_API_KEY:
+    skills: [ai-sdk, workflow]
+    required: false
+    secret: true
+    note: "Already set in ~/.zshrc on this system"
+
+  MESH_API_KEY:
+    skills: [flux]
+    required: true
+    secret: true
+    note: "Already set in ~/.zshrc on this system — get from Mesh workspace settings"
+
+  TELEGRAM_BOT_TOKEN:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    note: "Already set in ~/.openfang/secrets.env on this system"
+
+  PARALLEL_API_KEY:
+    skills: [parallel-web-search, parallel-web-extract, parallel-deep-research, parallel-data-enrichment, result, status, setup]
+    required: true
+    secret: true
+    get_from: "https://parallel.ai — dashboard → API Keys"
+
+  VERCEL_TOKEN:
+    skills: [vercel-cli, vercel-api, vercel-firewall, deployments-cicd, marketplace, observability]
+    required: false
+    secret: true
+    get_from: "https://vercel.com/account/tokens"
+
+  VERCEL_ORG_ID:
+    skills: [vercel-cli, deployments-cicd]
+    required: false
+    secret: false
+    get_from: "Run: vercel teams ls"
+
+  VERCEL_PROJECT_ID:
+    skills: [vercel-cli, deployments-cicd]
+    required: false
+    secret: false
+    get_from: "Run: vercel project ls  or check .vercel/project.json"
+
+  V0_API_KEY:
+    skills: [v0-dev]
+    required: false
+    secret: true
+    get_from: "https://v0.app/chat/settings/keys"
+
+  GEMINI_API_KEY:
+    skills: [visual-design]
+    required: false
+    secret: true
+    get_from: "https://aistudio.google.com/apikey"
+
+  SENTRY_DSN:
+    skills: [sentry]
+    required: false
+    secret: true
+    get_from: "Sentry dashboard → Project Settings → Client Keys"
+
+  SENTRY_AUTH_TOKEN:
+    skills: [sentry]
+    required: false
+    secret: true
+    get_from: "Sentry dashboard → Settings → Auth Tokens"
+
+  TURBO_TOKEN:
+    skills: [turborepo]
+    required: false
+    secret: true
+    get_from: "https://vercel.com/account/tokens"
+
+  TURBO_TEAM:
+    skills: [turborepo]
+    required: false
+    secret: false
+    get_from: "Your Vercel team slug (e.g. my-team)"
+
+  RESEND_API_KEY:
+    skills: [email]
+    required: false
+    secret: true
+    get_from: "https://resend.com/api-keys"
+
+  STRIPE_SECRET_KEY:
+    skills: [payments]
+    required: false
+    secret: true
+    get_from: "https://dashboard.stripe.com/apikeys"
+
+  STRIPE_PUBLISHABLE_KEY:
+    skills: [payments]
+    required: false
+    secret: false
+    get_from: "https://dashboard.stripe.com/apikeys"
+
+  STRIPE_WEBHOOK_SECRET:
+    skills: [payments]
+    required: false
+    secret: true
+    get_from: "Stripe dashboard → Webhooks → signing secret"
+
+  OPENAI_API_KEY:
+    skills: [ai-sdk, workflow]
+    required: false
+    secret: true
+    get_from: "https://platform.openai.com/api-keys"
+
+  SLACK_BOT_TOKEN:
+    skills: [chat-sdk, slack-tools]
+    required: false
+    secret: true
+    get_from: "https://api.slack.com/apps → OAuth & Permissions"
+
+  SLACK_SIGNING_SECRET:
+    skills: [chat-sdk, slack-tools]
+    required: false
+    secret: true
+    get_from: "https://api.slack.com/apps → Basic Information"
+
+  DISCORD_BOT_TOKEN:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "https://discord.com/developers/applications → Bot → Token"
+
+  GITHUB_TOKEN:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "https://github.com/settings/tokens"
+
+  LINEAR_ACCESS_TOKEN:
+    skills: [chat-sdk, linear-tools]
+    required: false
+    secret: true
+    get_from: "https://linear.app/settings/api"
+
+  AWS_ACCESS_KEY_ID:
+    skills: [aws]
+    required: false
+    secret: false
+    get_from: "AWS Console → IAM → Security credentials"
+
+  AWS_SECRET_ACCESS_KEY:
+    skills: [aws]
+    required: false
+    secret: true
+    get_from: "AWS Console → IAM → Security credentials"
+
+  AWS_DEFAULT_REGION:
+    skills: [aws, agent-browser]
+    required: false
+    secret: false
+    default: "us-east-1"
+
+  AGENT_BROWSER_ENCRYPTION_KEY:
+    skills: [agent-browser]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 32"
+
+  AGENT_BROWSER_ALLOWED_DOMAINS:
+    skills: [agent-browser]
+    required: false
+    secret: false
+    note: "Optional e.g. example.com,*.example.com"
+
+  CLAUDE_PLUGIN_ROOT:
+    skills: [planning-with-files]
+    required: false
+    secret: false
+    default: "~/.agents/skills/planning-with-files"
+
+  FLAGS_SECRET:
+    skills: [vercel-flags]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -base64 32"
+
+  CRON_SECRET:
+    skills: [cron-jobs, vercel-functions]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 16"
+
+  # ── Auth providers ────────────────────────────────────────────────────────
+  CLERK_SECRET_KEY:
+    skills: [auth, next-forge]
+    required: false
+    secret: true
+    get_from: "https://dashboard.clerk.com → API Keys"
+
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
+    skills: [auth, next-forge]
+    required: false
+    secret: false
+    get_from: "https://dashboard.clerk.com → API Keys"
+
+  AUTH0_SECRET:
+    skills: [auth]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 32"
+
+  AUTH0_CLIENT_ID:
+    skills: [auth]
+    required: false
+    secret: false
+    get_from: "https://manage.auth0.com → Applications"
+
+  AUTH0_CLIENT_SECRET:
+    skills: [auth]
+    required: false
+    secret: true
+    get_from: "https://manage.auth0.com → Applications"
+
+  AUTH0_ISSUER_BASE_URL:
+    skills: [auth]
+    required: false
+    secret: false
+    get_from: "https://manage.auth0.com → Applications (e.g. https://your-tenant.auth0.com)"
+
+  AUTH_SECRET:
+    skills: [auth]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 32"
+    get_from: "Auth.js/NextAuth — or auto-generated"
+
+  # ── CMS ───────────────────────────────────────────────────────────────────
+  SANITY_PROJECT_ID:
+    skills: [cms]
+    required: false
+    secret: false
+    get_from: "https://sanity.io/manage → project settings"
+
+  SANITY_DATASET:
+    skills: [cms]
+    required: false
+    secret: false
+    default: "production"
+
+  SANITY_API_TOKEN:
+    skills: [cms]
+    required: false
+    secret: true
+    get_from: "https://sanity.io/manage → API → Tokens"
+
+  CONTENTFUL_SPACE_ID:
+    skills: [cms]
+    required: false
+    secret: false
+    get_from: "Contentful dashboard → Settings → API keys"
+
+  CONTENTFUL_ACCESS_TOKEN:
+    skills: [cms]
+    required: false
+    secret: true
+    get_from: "Contentful dashboard → Settings → API keys"
+
+  DATOCMS_API_TOKEN:
+    skills: [cms]
+    required: false
+    secret: true
+    get_from: "https://www.datocms.com/dashboard → Settings → API tokens"
+
+  # ── Database / Storage ────────────────────────────────────────────────────
+  DATABASE_URL:
+    skills: [next-forge, bootstrap, ai-generation-persistence]
+    required: false
+    secret: true
+    get_from: "Your Postgres provider (Neon, Supabase, etc.)"
+
+  BLOB_READ_WRITE_TOKEN:
+    skills: [next-forge, vercel-storage, ai-generation-persistence]
+    required: false
+    secret: true
+    get_from: "Vercel dashboard → Storage → Blob"
+
+  UPSTASH_REDIS_REST_URL:
+    skills: [next-forge, vercel-storage, ai-generation-persistence]
+    required: false
+    secret: false
+    get_from: "https://console.upstash.com → Redis → REST API"
+
+  UPSTASH_REDIS_REST_TOKEN:
+    skills: [next-forge, vercel-storage, ai-generation-persistence]
+    required: false
+    secret: true
+    get_from: "https://console.upstash.com → Redis → REST API"
+
+  MONGODB_URI:
+    skills: [mongodb]
+    required: false
+    secret: true
+    get_from: "MongoDB Atlas → Connect → connection string"
+
+  ELASTICSEARCH_URL:
+    skills: [elasticsearch]
+    required: false
+    secret: false
+    get_from: "Your Elasticsearch cluster URL (e.g. https://localhost:9200)"
+
+  ELASTICSEARCH_API_KEY:
+    skills: [elasticsearch]
+    required: false
+    secret: true
+    get_from: "Elasticsearch → Security → API keys"
+
+  REDIS_URL:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "Your Redis instance URL (e.g. redis://localhost:6379)"
+
+  # ── AI Gateway ────────────────────────────────────────────────────────────
+  AI_GATEWAY_API_KEY:
+    skills: [ai-gateway, ai-sdk, geistdocs]
+    required: false
+    secret: true
+    get_from: "Vercel dashboard → AI Gateway (or auto via vercel env pull)"
+
+  # ── Observability ─────────────────────────────────────────────────────────
+  DRAIN_SECRET:
+    skills: [observability]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 16"
+
+  NEXT_PUBLIC_DD_APPLICATION_ID:
+    skills: [observability]
+    required: false
+    secret: false
+    get_from: "Datadog → RUM → Applications"
+
+  NEXT_PUBLIC_DD_CLIENT_TOKEN:
+    skills: [observability]
+    required: false
+    secret: true
+    get_from: "Datadog → Organization Settings → Client Tokens"
+
+  # ── Vercel extras ─────────────────────────────────────────────────────────
+  VERCEL_CLIENT_ID:
+    skills: [sign-in-with-vercel]
+    required: false
+    secret: false
+    get_from: "Vercel Integrations Console → OAuth app"
+
+  VERCEL_CLIENT_SECRET:
+    skills: [sign-in-with-vercel]
+    required: false
+    secret: true
+    get_from: "Vercel Integrations Console → OAuth app"
+
+  VERCEL_QUEUE_API_TOKEN:
+    skills: [vercel-queues]
+    required: false
+    secret: true
+    get_from: "Vercel dashboard → Queues (only needed outside Vercel)"
+
+  NEXT_PUBLIC_APP_URL:
+    skills: [payments, next-forge]
+    required: false
+    secret: false
+    get_from: "Your app's public URL (e.g. https://myapp.com)"
+
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+    skills: [payments]
+    required: false
+    secret: false
+    get_from: "https://dashboard.stripe.com/apikeys"
+
+  # ── Chat platforms ────────────────────────────────────────────────────────
+  SLACK_APP_TOKEN:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "https://api.slack.com/apps → Basic Information → App-Level Tokens (Socket Mode)"
+
+  TEAMS_APP_ID:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "Azure Bot Service → Configuration"
+
+  TEAMS_APP_PASSWORD:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "Azure Bot Service → Configuration → Client Secret"
+
+  TEAMS_APP_TENANT_ID:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "Azure Portal → Azure Active Directory → Tenant ID"
+
+  DISCORD_PUBLIC_KEY:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "https://discord.com/developers/applications → General Information"
+
+  DISCORD_APPLICATION_ID:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "https://discord.com/developers/applications → General Information"
+
+  GITHUB_APP_ID:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "https://github.com/settings/apps → your app → App ID"
+
+  GITHUB_PRIVATE_KEY:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "https://github.com/settings/apps → your app → Generate private key"
+
+  GITHUB_WEBHOOK_SECRET:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    auto_generate: "openssl rand -hex 20"
+
+  LINEAR_CLIENT_ID:
+    skills: [chat-sdk]
+    required: false
+    secret: false
+    get_from: "https://linear.app/settings/api → OAuth applications"
+
+  LINEAR_CLIENT_SECRET:
+    skills: [chat-sdk]
+    required: false
+    secret: true
+    get_from: "https://linear.app/settings/api → OAuth applications"
+
+  LINEAR_API_KEY:
+    skills: [linear-tools]
+    required: false
+    secret: true
+    get_from: "https://linear.app/settings/api → Personal API keys"
+
+  # ── External services ─────────────────────────────────────────────────────
+  HUGGINGFACE_TOKEN:
+    skills: [llm-finetuning]
+    required: false
+    secret: true
+    get_from: "https://huggingface.co/settings/tokens"
+
+  SEARXNG_URL:
+    skills: [searxng]
+    required: false
+    secret: false
+    get_from: "Your SearXNG instance URL (e.g. http://localhost:8080)"
+
+  NOTION_TOKEN:
+    skills: [notion]
+    required: false
+    secret: true
+    get_from: "https://www.notion.so/my-integrations → New integration → Secret"
+
+  CONFLUENCE_URL:
+    skills: [confluence]
+    required: false
+    secret: false
+    get_from: "Your Confluence instance URL (e.g. https://yourorg.atlassian.net/wiki)"
+
+  CONFLUENCE_TOKEN:
+    skills: [confluence]
+    required: false
+    secret: true
+    get_from: "https://id.atlassian.com/manage-profile/security/api-tokens"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH STEPS (printed as reminders after install)
+# ─────────────────────────────────────────────────────────────────────────────
+auth_steps:
+  - cmd: "parallel-cli login"
+    skills: [parallel-web-search, parallel-web-extract, parallel-deep-research, parallel-data-enrichment]
+    note: "Or set PARALLEL_API_KEY instead"
+  - cmd: "gh auth login"
+    skills: [yeet, finishing-a-development-branch, commit-security-scan, github]
+  - cmd: "vercel login && vercel link"
+    skills: [vercel-cli, deployments-cicd, env-vars, bootstrap]
+  - cmd: "aws configure"
+    skills: [aws]
+    note: "Or use: aws sso login"
+  - cmd: "az login"
+    skills: [azure]
+  - cmd: "gcloud auth login && gcloud auth application-default login"
+    skills: [gcp]
+  - cmd: "huggingface-cli login"
+    skills: [llm-finetuning]
+  - cmd: "turbo login && turbo link"
+    skills: [turborepo]
+  - cmd: "sentry-cli login"
+    skills: [sentry]
+    note: "Or set SENTRY_AUTH_TOKEN instead"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RUNTIME REQUIREMENTS (external services that must be running)
+# ─────────────────────────────────────────────────────────────────────────────
+runtime_requirements:
+  - name: "Termdock on port 3033"
+    skills: [termdock-ast]
+  - name: "SearXNG instance"
+    skills: [searxng]
+    note: "Set SEARXNG_URL to your instance"
+  - name: "Kubernetes cluster + kubeconfig"
+    skills: [kubernetes, helm]
+  - name: "Google OAuth connector"
+    skills: [google-docs, google-drive, google-sheets, google-slides]
+    note: "Authorize Google account in your agent runtime"
+  - name: "Jira integration connector"
+    skills: [jira]
+  - name: "Notion integration token"
+    skills: [notion]
+    note: "Create at https://www.notion.so/my-integrations"
+  - name: "macOS Screen Recording permission"
+    skills: [screenshot]
+    os: [macos]
+  - name: "js_repl + --sandbox danger-full-access"
+    skills: [playwright-interactive]
+    note: "Enable js_repl in ~/.codex/config.toml"
